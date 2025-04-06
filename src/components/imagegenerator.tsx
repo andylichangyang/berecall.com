@@ -4,14 +4,21 @@ import { PhotoIcon } from '@heroicons/react/24/outline';
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
+    if (!process.env.NEXT_PUBLIC_STABILITY_API_KEY) {
+      setError('请先配置 Stability AI API 密钥');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // 这里我们将使用 Stable Diffusion API
       const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
         method: 'POST',
         headers: {
@@ -28,12 +35,19 @@ export default function ImageGenerator() {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`API 请求失败: ${response.status}`);
+      }
+
       const data = await response.json();
       if (data.artifacts && data.artifacts[0]) {
         setGeneratedImage(`data:image/png;base64,${data.artifacts[0].base64}`);
+      } else {
+        throw new Error('生成图片失败');
       }
     } catch (error) {
       console.error('Error generating image:', error);
+      setError(error instanceof Error ? error.message : '生成图片时发生错误');
     } finally {
       setLoading(false);
     }
@@ -58,6 +72,11 @@ export default function ImageGenerator() {
             />
           </div>
         </div>
+        {error && (
+          <div className="text-red-600 text-sm">
+            {error}
+          </div>
+        )}
         <button
           type="submit"
           disabled={loading || !prompt}
