@@ -31,19 +31,26 @@ generateButton.addEventListener('click', async () => {
       body: JSON.stringify({ prompt: userPrompt }),
     });
 
-    if (!response.ok) {
-      // 如果响应状态不是 2xx，尝试解析错误信息
-      let errorMsg = `HTTP error! status: ${response.status}`;
-      try {
-        // 后端错误时应该返回 JSON
-        const errorResult = await response.json();
-        errorMsg = `<span class="math-inline">\{errorResult\.error \|\| 'Unknown backend error'\} \(</span>{response.status})`;
-      } catch (e) {
-        // 如果解析 JSON 失败，使用原始状态文本
-        errorMsg = `Backend error: ${response.status} ${response.statusText}`;
-      }
-      throw new Error(errorMsg);
-    }
+    // script.js (修改 if (!response.ok) 错误处理块)
+if (!response.ok) {
+  let errorDetail = `Status: ${response.status} ${response.statusText}`; // 默认错误信息
+  try {
+      // **重要：现在我们优先尝试读取纯文本错误**
+      const textError = await response.text();
+      // 如果读取到的文本不为空，就用它作为错误详情
+      errorDetail = textError.trim() ? textError : errorDetail;
+  } catch (e) {
+      // 如果读取文本也失败了（可能性很小），就保持用状态码作为信息
+      console.error("Failed to read error response body as text", e);
+  }
+
+  // **直接在 resultArea 显示错误详情**
+  resultArea.innerHTML = `生成图片失败 (后端错误): <pre style="white-space: pre-wrap; word-wrap: break-word; text-align: left;">${errorDetail}</pre>`; // 使用 <pre> 保持换行和空格
+
+  // 出错后，确保按钮可用
+  generateButton.disabled = false;
+  return; // 阻止后续代码执行 (因为已经出错了)
+}
 
     // 处理成功的图片响应
     const imageBlob = await response.blob(); // 将响应体作为 Blob 对象读取

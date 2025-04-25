@@ -53,18 +53,21 @@ export async function onRequestPost(context) {
       }
     });
 
-  } // functions/generate-image.js  (修改 catch 块)
+  } // functions/generate-image.js (新的 catch 块)
   catch (error) {
-      // 仍然在后端日志打印详细错误 (如果日志工作的话)
+      // 仍然尝试在后端日志打印详细信息 (以防万一日志能工作)
       console.error('Error in backend function calling AI:', error);
   
-      // 提取错误消息
-      const errorMsg = error.message || 'An unknown error occurred';
+      // 准备包含详细信息的错误消息，包括堆栈跟踪 (如果可用)
+      const errorMsg = `Backend Function Error: <span class="math-inline">\{error\.message \|\| 'Unknown error'\}\\nStack Trace\:\\n</span>{error.stack || 'Not available'}`;
   
-      // 返回一个更简单的 JSON 对象，只包含错误消息
-      return new Response(JSON.stringify({ error: `Backend Error: ${errorMsg}` }), {
+      // **重要：将错误作为纯文本返回，而不是 JSON**
+      return new Response(errorMsg, {
           status: 500, // 保持 500 错误状态
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+              // **重要：设置 Content-Type 为 text/plain**
+              'Content-Type': 'text/plain'
+          },
       });
   }
 }
