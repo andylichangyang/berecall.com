@@ -53,16 +53,18 @@ export async function onRequestPost(context) {
       }
     });
 
-  } catch (error) {
-    // 捕获并记录错误
-    console.error('Error in backend function calling AI:', error);
-    // 返回一个包含错误信息的 JSON 响应
-    return new Response(JSON.stringify({
-         error: 'Internal Server Error calling AI',
-         details: error.message || 'An unknown error occurred'
-        }), {
-      status: 500, // 服务器内部错误
-      headers: { 'Content-Type': 'application/json' },
-    });
+  } // functions/generate-image.js  (修改 catch 块)
+  catch (error) {
+      // 仍然在后端日志打印详细错误 (如果日志工作的话)
+      console.error('Error in backend function calling AI:', error);
+  
+      // 提取错误消息
+      const errorMsg = error.message || 'An unknown error occurred';
+  
+      // 返回一个更简单的 JSON 对象，只包含错误消息
+      return new Response(JSON.stringify({ error: `Backend Error: ${errorMsg}` }), {
+          status: 500, // 保持 500 错误状态
+          headers: { 'Content-Type': 'application/json' },
+      });
   }
 }
